@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.9
+  Api:
+    Cors:
+      AllowOrigin: "'*'"
+      AllowHeaders: "'Content-Type,X-API-Key,Authorization'"
+      AllowMethods: "'GET,POST,OPTIONS'"
+
+Resources:
+  AnalyzeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: AWSFriendlyCounsellor-Analyzer
+      CodeUri: backend/
+      Handler: handler.handler
+      Environment:
+        Variables:
+          LOG_LEVEL: INFO
+      Events:
+        RootGet:
+          Type: Api
+          Properties:
+            Path: /
+            Method: GET
+        HealthCheck:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: GET
+        AnalyzePost:
+          Type: Api
+          Properties:
+            Path: /api/analyze
+            Method: POST
+        IacPost:
+          Type: Api
+          Properties:
+            Path: /api/iac
+            Method: POST
+        NarrativePost:
+          Type: Api
+          Properties:
+            Path: /api/narrative
+            Method: POST
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  
+  FunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt AnalyzeFunction.Arn

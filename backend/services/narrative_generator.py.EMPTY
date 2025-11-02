@@ -1,0 +1,261 @@
+"""
+Narrative Generator - PROFESSIONAL EDITION
+Generates comprehensive, Solutions Architect-level analysis
+"""
+from typing import Dict, List, Any
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def generate_narrative_analysis(
+    services: List[Dict],
+    classification: Dict,
+    cost_analysis: Dict,
+    implementation_guide: Dict,
+    estimated_users: int
+) -> str:
+    """
+    Generate comprehensive narrative analysis with professional insights
+    """
+    
+    project_type = classification.get("primary", "application")
+    confidence = classification.get("confidence", 0.8)
+    features = classification.get("features", [])
+    
+    # Generate complete narrative HTML
+    narrative = generate_executive_summary(project_type, estimated_users, confidence, features)
+    narrative += generate_architecture_overview(services, project_type, estimated_users)
+    narrative += generate_cost_narrative(cost_analysis, services, estimated_users)
+    narrative += generate_implementation_narrative(implementation_guide)
+    narrative += generate_conclusion(project_type)
+    
+    return narrative
+
+
+def generate_executive_summary(project_type: str, users: int, confidence: float, features: List) -> str:
+    """Executive-level project summary"""
+    
+    project_descriptions = {
+        "ecommerce": "an e-commerce platform with payment processing and inventory management",
+        "api": "a RESTful API service requiring scalable compute and efficient data access",
+        "social": "a social media application with real-time interactions and media storage",
+        "blog": "a content platform for publishing and managing articles",
+        "saas": "a multi-tenant SaaS application with subscription management"
+    }
+    
+    project_desc = project_descriptions.get(project_type, "a cloud-based application")
+    scale = "Small Scale" if users < 1000 else "Medium Scale" if users < 50000 else "Large Scale"
+    
+    return f"""
+    <section class="narrative-section executive-summary">
+        <h2>📊 Executive Summary</h2>
+        
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h4>Project Type</h4>
+                <p><strong>{project_type.title()}</strong></p>
+            </div>
+            <div class="summary-card">
+                <h4>Scale</h4>
+                <p><strong>{scale}</strong> ({users:,} users)</p>
+            </div>
+            <div class="summary-card">
+                <h4>Confidence</h4>
+                <p><strong>{confidence*100:.0f}%</strong></p>
+            </div>
+        </div>
+        
+        <div class="overview-text">
+            <p>Based on my analysis, you're building <strong>{project_desc}</strong>. 
+            This architecture is designed for <strong>{users:,} concurrent users</strong> with built-in 
+            scalability to handle growth.</p>
+            
+            {f'<p><strong>Key Features Detected:</strong> {", ".join(features[:5])}</p>' if features else ''}
+            
+            <p>The proposed solution follows AWS Well-Architected Framework principles across all five pillars: 
+            Operational Excellence, Security, Reliability, Performance Efficiency, and Cost Optimization.</p>
+        </div>
+    </section>
+    """
+
+
+def generate_architecture_overview(services: List[Dict], project_type: str, users: int) -> str:
+    """Architecture deep dive"""
+    
+    html = """
+    <section class="narrative-section architecture-deep-dive">
+        <h2>🏗️ Architecture Deep Dive</h2>
+        <p class="section-intro">Let me explain the architectural decisions behind each service recommendation. 
+        These aren't arbitrary choices—each service is selected based on your specific requirements and AWS best practices.</p>
+    """
+    
+    for i, service in enumerate(services, 1):
+        name = service.get('name', 'Service')
+        category = service.get('category', 'service')
+        why_needed = service.get('why_needed', '')
+        use_case = service.get('use_case_example', '')
+        typical_cost = service.get('typical_monthly', '$0-50')
+        
+        html += f"""
+        <div class="service-detail">
+            <h3>{i}. {name}</h3>
+            <span class="category-badge">{category}</span>
+            
+            <div class="service-why">
+                <h4>🎯 Why {name}?</h4>
+                <p>{why_needed}</p>
+            </div>
+            
+            {f'<div class="service-usage"><h4>💼 In Your Application</h4><p>{use_case}</p></div>' if use_case else ''}
+            
+            <div class="service-cost">
+                <h4>💰 Cost</h4>
+                <p><strong>{typical_cost}/month</strong> based on {users:,} users with typical usage patterns.</p>
+            </div>
+        </div>
+        """
+    
+    html += "</section>"
+    return html
+
+
+def generate_cost_narrative(cost_analysis: Dict, services: List[Dict], users: int) -> str:
+    """Cost analysis narrative"""
+    
+    summary = cost_analysis.get('summary', {})
+    typical = summary.get('typical', '$50-100')
+    minimum = summary.get('minimum', '$20')
+    maximum = summary.get('maximum', '$200')
+    free_tier = summary.get('free_tier_viable', False)
+    
+    html = f"""
+    <section class="narrative-section cost-analysis">
+        <h2>💰 Cost Analysis</h2>
+        
+        <div class="cost-summary">
+            <p>Based on your expected traffic and usage patterns with <strong>{users:,} users</strong>, 
+            here's what you can expect to pay:</p>
+            
+            <div class="cost-range">
+                <div class="cost-item">
+                    <span class="cost-label">Minimum</span>
+                    <span class="cost-value">{minimum}</span>
+                </div>
+                <div class="cost-item typical">
+                    <span class="cost-label">Typical</span>
+                    <span class="cost-value">{typical}</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-label">Maximum</span>
+                    <span class="cost-value">{maximum}</span>
+                </div>
+            </div>
+        </div>
+    """
+    
+    if free_tier:
+        html += """
+        <div class="free-tier-notice">
+            <p>✨ <strong>Great news!</strong> If you're just starting out, you can likely run this within 
+            AWS's Free Tier limits for the first 12 months, significantly reducing your initial costs.</p>
+        </div>
+        """
+    
+    html += """
+        <div class="cost-breakdown">
+            <h4>Cost Breakdown by Service</h4>
+            <p>The costs above are distributed across the recommended services. Each service is priced 
+            based on actual usage, so you only pay for what you use.</p>
+        </div>
+    </section>
+    """
+    
+    return html
+
+
+def generate_implementation_narrative(guide: Dict) -> str:
+    """Implementation roadmap"""
+    
+    phases = guide.get('phases', [])
+    
+    html = """
+    <section class="narrative-section implementation-guide">
+        <h2>🚀 Implementation Roadmap</h2>
+        <p class="section-intro">Here's a step-by-step approach to building your infrastructure. 
+        Follow these phases to go from zero to production.</p>
+    """
+    
+    for i, phase in enumerate(phases, 1):
+        name = phase.get('name', f'Phase {i}')
+        description = phase.get('description', '')
+        duration = phase.get('duration', 'varies')
+        steps = phase.get('steps', [])
+        
+        html += f"""
+        <div class="implementation-phase">
+            <h3>Phase {i}: {name}</h3>
+            <p class="phase-duration"><em>Estimated time: {duration}</em></p>
+            <p>{description}</p>
+            
+            <ol class="phase-steps">
+        """
+        
+        for step in steps:
+            html += f"<li>{step}</li>"
+        
+        html += """
+            </ol>
+        </div>
+        """
+    
+    html += """
+        <div class="implementation-tips">
+            <h4>💡 Pro Tips</h4>
+            <ul>
+                <li>Start with Phase 1 and test thoroughly before moving forward</li>
+                <li>Use Infrastructure as Code (click "Generate Terraform Code" above)</li>
+                <li>Set up monitoring and cost alerts from day one</li>
+                <li>Never skip security configurations, even in development</li>
+            </ul>
+        </div>
+    </section>
+    """
+    
+    return html
+
+
+def generate_conclusion(project_type: str) -> str:
+    """Conclusion"""
+    
+    conclusions = {
+        "ecommerce": "With these services in place, you'll have a scalable, reliable e-commerce platform that can grow with your business.",
+        "api": "This architecture will give you a robust, scalable API that can handle your traffic efficiently.",
+        "social": "You'll have a solid foundation for a social platform that can scale as your user base grows.",
+        "blog": "This setup will give you a fast, reliable content platform with great user experience.",
+        "saas": "You're setting up a professional SaaS infrastructure that can scale with your customers."
+    }
+    
+    conclusion = conclusions.get(project_type, "This architecture gives you a solid foundation to build upon.")
+    
+    return f"""
+    <section class="narrative-section conclusion">
+        <h2>✅ Ready to Build</h2>
+        <p>{conclusion}</p>
+        
+        <p>Remember, this is your starting architecture. As you learn more about your users' needs and usage 
+        patterns, you can always adjust and optimize. AWS makes it easy to add, remove, or modify services as you grow.</p>
+        
+        <div class="next-steps">
+            <h4>🎯 Next Steps</h4>
+            <ol>
+                <li>Use the "Generate Terraform Code" button to get deployable infrastructure</li>
+                <li>Follow the implementation guide above</li>
+                <li>Set up monitoring and cost alerts before you deploy</li>
+                <li>Test thoroughly in a development environment first</li>
+            </ol>
+        </div>
+        
+        <p class="good-luck">Good luck with your project! 🚀</p>
+    </section>
+    """

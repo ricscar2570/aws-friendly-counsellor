@@ -1,0 +1,48 @@
+from typing import Dict, List
+import logging
+
+logger = logging.getLogger(__name__)
+
+def generate_guide(
+    services: List[str],
+    classification: Dict,
+    estimated_users: int
+) -> Dict:
+    logger.info("Generating implementation guide...")
+    
+    primary = classification["primary"]
+    
+    guide = {
+        "format": "advanced",
+        "sections": 8,
+        "introduction": {
+            "title": f"Building your {primary.replace('_', ' ').title()}",
+            "overview": f"Complete guide to implement a {primary} using {len(services)} AWS services",
+            "timeline": "15-21 hours over 3-4 days"
+        },
+        "prerequisites": [
+            "AWS Account",
+            "AWS CLI configured",
+            "Python 3.9+",
+            "Basic terminal knowledge"
+        ],
+        "architecture": {
+            "pattern": "Serverless",
+            "services_count": len(services),
+            "scalability": f"Designed for {estimated_users:,} users"
+        },
+        "implementation_phases": [
+            {"phase": 1, "name": "Foundation Setup", "duration": "2-3 hours"},
+            {"phase": 2, "name": "Core Services", "duration": "4-6 hours"},
+            {"phase": 3, "name": "Integration", "duration": "3-4 hours"},
+            {"phase": 4, "name": "Testing & Deploy", "duration": "2-3 hours"}
+        ],
+        "next_steps": [
+            "Review prerequisites",
+            "Set up AWS account",
+            "Follow implementation phases",
+            "Deploy to production"
+        ]
+    }
+    
+    return guide

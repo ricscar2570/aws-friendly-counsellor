@@ -1,0 +1,5 @@
+# TROVA QUESTA RIGA (circa riga 323):
+"cost_explanation": f"First 50,000 MAUs are free. At {users} users, you're {"well within free tier limits" if users < 50000 else f"paying approximately ${(users-50000)*0.0055:.2f}/month—still cheaper than alternatives"}.",
+
+# SOSTITUISCI CON:
+"cost_explanation": f"First 50,000 MAUs are free. At {users} users, you're {'well within free tier limits' if users < 50000 else 'paying approximately $' + str(round((users-50000)*0.0055, 2)) + '/month—still cheaper than alternatives'}.",

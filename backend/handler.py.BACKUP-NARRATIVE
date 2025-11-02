@@ -1,0 +1,163 @@
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from mangum import Mangum
+from datetime import datetime
+import logging
+import time
+import os
+
+from models.validated_request import AnalysisRequest, ErrorResponse
+from security.auth import verify_api_key, check_rate_limit
+from services.classifier import classify_use_case
+from services.recommender import recommend_services
+from services.cost_calculator import calculate_costs, AWS_SERVICES_DB
+from services.guide_generator import generate_guide
+from services.iac_generator import generate_iac
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="AWS Friendly Counsellor v3.0",
+    description="Production-ready AWS architecture advisor",
+    version="3.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def root():
+    return {
+        "service": "AWS Friendly Counsellor",
+        "version": "3.0.0",
+        "status": "healthy",
+        "endpoints": {
+            "analyze": "/api/analyze",
+            "iac": "/api/iac",
+            "health": "/health"
+        }
+    }
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "3.0.0"
+    }
+
+@app.post("/api/analyze")
+async def analyze(
+    request: AnalysisRequest,
+    api_key: str = Depends(verify_api_key)
+):
+    start_time = time.time()
+    
+    try:
+        if api_key != "anonymous":
+            check_rate_limit(api_key)
+        
+        logger.info(f"Processing analysis request from {api_key[:10]}...")
+        
+        classification = classify_use_case(request.description)
+        
+        # ✅ FIX: recommend_services ora ritorna dizionari completi
+        services_enriched = recommend_services(classification, request.estimated_users)
+        
+        # ✅ FIX: Estrai solo i nomi per cost_calculator (che si aspetta stringhe)
+        service_names = [s["name"] for s in services_enriched]
+        
+        # Cost analysis con nomi servizi
+        cost_analysis = calculate_costs(service_names, request.estimated_users)
+        
+        # Guide generation con nomi servizi
+        guide = generate_guide(service_names, classification, request.estimated_users)
+        
+        project_id = f"proj_{int(time.time())}"
+        
+        response = {
+            "project_id": project_id,
+            "analysis": {
+                "project_type": classification["primary"],
+                "confidence": classification["confidence"],
+                "detected_features": classification["features"]
+            },
+            "services": services_enriched,  # ✅ Ora include why_needed e use_case_example
+            "cost_analysis": cost_analysis,
+            "implementation_guide": guide,
+            "metadata": {
+                "processing_time_ms": int((time.time() - start_time) * 1000),
+                "timestamp": datetime.utcnow().isoformat(),
+                "version": "3.0.0"
+            }
+        }
+        
+        logger.info(f"Analysis completed in {response['metadata']['processing_time_ms']}ms")
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error processing request: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+@app.post("/api/iac")
+async def generate_infrastructure_code(
+    request: AnalysisRequest,
+    api_key: str = Depends(verify_api_key)
+):
+    """Generate Infrastructure as Code (Terraform)"""
+    start_time = time.time()
+    
+    try:
+        logger.info(f"Generating IaC for {api_key[:10]}...")
+        
+        classification = classify_use_case(request.description)
+        services_enriched = recommend_services(classification, request.estimated_users)
+        
+        # ✅ GENERA TERRAFORM
+        iac_output = generate_iac(
+            services=services_enriched,
+            classification=classification,
+            estimated_users=request.estimated_users
+        )
+        
+        response = {
+            "project_id": f"iac_{int(time.time())}",
+            "analysis": {
+                "project_type": classification["primary"],
+                "services_count": len(services_enriched)
+            },
+            "terraform": iac_output,
+            "metadata": {
+                "processing_time_ms": int((time.time() - start_time) * 1000),
+                "timestamp": datetime.utcnow().isoformat(),
+                "version": "3.0.0"
+            }
+        }
+        
+        logger.info(f"IaC generated in {response['metadata']['processing_time_ms']}ms")
+        
+        return response
+        
+    except Exception as e:
+        logger.exception(f"Error generating IaC: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+handler = Mangum(app, lifespan="off")
