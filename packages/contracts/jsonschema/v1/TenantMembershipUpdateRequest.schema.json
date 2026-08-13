@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "role": {
+      "anyOf": [
+        {
+          "enum": [
+            "viewer",
+            "editor",
+            "admin",
+            "owner"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Role"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "enum": [
+            "active",
+            "suspended"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status"
+    }
+  },
+  "required": [
+    "expected_revision"
+  ],
+  "title": "TenantMembershipUpdateRequest",
+  "type": "object"
+}

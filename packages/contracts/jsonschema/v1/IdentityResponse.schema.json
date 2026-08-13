@@ -1,0 +1,67 @@
+{
+  "$defs": {
+    "ResponseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "processing_time_ms": {
+          "minimum": 0,
+          "title": "Processing Time Ms",
+          "type": "integer"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "processing_time_ms",
+        "timestamp",
+        "version",
+        "contract_version"
+      ],
+      "title": "ResponseMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "metadata": {
+      "$ref": "#/$defs/ResponseMetadata"
+    },
+    "subject": {
+      "title": "Subject",
+      "type": "string"
+    },
+    "username": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Username"
+    }
+  },
+  "required": [
+    "subject",
+    "metadata"
+  ],
+  "title": "IdentityResponse",
+  "type": "object"
+}

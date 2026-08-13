@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "role": {
+      "default": "viewer",
+      "enum": [
+        "viewer",
+        "editor",
+        "admin",
+        "owner"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "subject": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Subject",
+      "type": "string"
+    }
+  },
+  "required": [
+    "subject"
+  ],
+  "title": "TenantMembershipCreateRequest",
+  "type": "object"
+}

@@ -1,0 +1,408 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Friendly Counsellor M1.4 managed identity, authorization, audit, and safe deployment baseline
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, production]
+    Description: Isolated deployment environment and API Gateway stage name.
+  ReleaseVersion:
+    Type: String
+    Default: local
+    AllowedPattern: '^[A-Za-z0-9._/+:-]{1,128}$'
+  GitSha:
+    Type: String
+    Default: unknown
+    AllowedPattern: '^[A-Fa-f0-9]{7,64}$|^unknown$'
+  AllowSelfRegistration:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Permit Cognito self-registration only where the environment policy explicitly allows it.
+  AllowedOrigins:
+    Type: String
+    Default: 'http://localhost:3000,http://localhost:5173'
+  RateLimitRequests:
+    Type: Number
+    Default: 100
+    MinValue: 1
+  RateLimitWindow:
+    Type: Number
+    Default: 3600
+    MinValue: 1
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653]
+  ReservedConcurrentExecutions:
+    Type: Number
+    Default: 10
+    MinValue: 1
+  EnableGradualDeployment:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Enable CodeDeploy traffic shifting after the environment has been bootstrapped once.
+  DeploymentPreferenceType:
+    Type: String
+    Default: AllAtOnce
+    AllowedValues:
+      - AllAtOnce
+      - Canary10Percent5Minutes
+      - Canary10Percent10Minutes
+      - Linear10PercentEvery1Minute
+      - Linear10PercentEvery10Minutes
+  EnableContributorInsights:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+  EnableTableDeletionProtection:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+  DataTableName:
+    Type: String
+    Default: ''
+    Description: Optional custom DynamoDB table name. Empty lets CloudFormation create an environment-unique name.
+
+Conditions:
+  HasCustomTableName: !Not [!Equals [!Ref DataTableName, '']]
+  UseGradualDeployment: !Equals [!Ref EnableGradualDeployment, 'true']
+  UseContributorInsights: !Equals [!Ref EnableContributorInsights, 'true']
+  UseTableDeletionProtection: !Equals [!Ref EnableTableDeletionProtection, 'true']
+  AllowUserSelfRegistration: !Equals [!Ref AllowSelfRegistration, 'true']
+  IsProduction: !Equals [!Ref EnvironmentName, production]
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.12
+    Architectures: [arm64]
+    Tracing: Active
+    PropagateTags: true
+    Environment:
+      Variables:
+        APP_ENVIRONMENT: !Ref EnvironmentName
+        RELEASE_VERSION: !Ref ReleaseVersion
+        GIT_SHA: !Ref GitSha
+        LOG_LEVEL: !Ref LogLevel
+        ALLOWED_ORIGINS: !Ref AllowedOrigins
+        RATE_LIMIT_REQUESTS: !Ref RateLimitRequests
+        RATE_LIMIT_WINDOW: !Ref RateLimitWindow
+        STORAGE_BACKEND: dynamodb
+        DYNAMODB_TABLE_NAME: !Ref ApplicationDataTable
+  Api:
+    TracingEnabled: true
+    MethodSettings:
+      - ResourcePath: '/*'
+        HttpMethod: '*'
+        DataTraceEnabled: false
+        MetricsEnabled: true
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+Resources:
+  ApplicationApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub AWSFriendlyCounsellor-${EnvironmentName}
+      StageName: !Ref EnvironmentName
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt ApplicationUserPool.Arn
+      Tags:
+        Application: AWSFriendlyCounsellor
+        Environment: !Ref EnvironmentName
+
+  ApplicationUserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Sub AWSFriendlyCounsellor-${EnvironmentName}
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      DeletionProtection: !If [IsProduction, ACTIVE, INACTIVE]
+      MfaConfiguration: OPTIONAL
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: !If [AllowUserSelfRegistration, false, true]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 14
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate: [email]
+      Tags:
+        Application: AWSFriendlyCounsellor
+        Environment: !Ref EnvironmentName
+        DataClassification: Confidential
+
+  ApplicationUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub AWSFriendlyCounsellor-${EnvironmentName}-client
+      UserPoolId: !Ref ApplicationUserPool
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      ReadAttributes: [email, email_verified]
+      WriteAttributes: [email]
+
+  ApplicationDataTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !If [HasCustomTableName, !Ref DataTableName, !Ref 'AWS::NoValue']
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      ContributorInsightsSpecification:
+        Enabled: !If [UseContributorInsights, true, false]
+      DeletionProtectionEnabled: !If [UseTableDeletionProtection, true, false]
+      Tags:
+        - Key: Application
+          Value: AWSFriendlyCounsellor
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: DataClassification
+          Value: Internal
+
+  AnalyzeFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      FunctionName: !Sub AWSFriendlyCounsellor-${EnvironmentName}-Analyzer
+      Description: !Sub AWS Friendly Counsellor ${EnvironmentName} API (${ReleaseVersion})
+      CodeUri: ../../
+      Handler: aws_friendly_counsellor.lambda_handler.handler
+      ReservedConcurrentExecutions: !Ref ReservedConcurrentExecutions
+      AutoPublishAlias: live
+      AutoPublishAliasAllProperties: true
+      DeploymentPreference:
+        Enabled: !If [UseGradualDeployment, true, false]
+        Type: !Ref DeploymentPreferenceType
+        Alarms:
+          - !Ref AliasErrorAlarm
+          - !Ref AliasThrottleAlarm
+      LoggingConfig:
+        LogFormat: JSON
+        ApplicationLogLevel: !Ref LogLevel
+        SystemLogLevel: INFO
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXRayDaemonWriteAccess
+        - Statement:
+            - Sid: TenantProjectPersistence
+              Effect: Allow
+              Action:
+                - dynamodb:DescribeTable
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:Query
+                - dynamodb:TransactWriteItems
+              Resource: !GetAtt ApplicationDataTable.Arn
+      Events:
+        RootAny:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApplicationApi
+            Path: /
+            Method: ANY
+            Auth:
+              Authorizer: NONE
+        HealthCombined:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApplicationApi
+            Path: /health
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        HealthLive:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApplicationApi
+            Path: /health/live
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        HealthReady:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApplicationApi
+            Path: /health/ready
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        ProxyOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApplicationApi
+            Path: "/{proxy+}"
+            Method: OPTIONS
+            Auth:
+              Authorizer: NONE
+        ProxyAny:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApplicationApi
+            Path: "/{proxy+}"
+            Method: ANY
+      Tags:
+        Application: AWSFriendlyCounsellor
+        Environment: !Ref EnvironmentName
+
+  AnalyzeFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: AnalyzeFunction
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AnalyzeFunction}
+      RetentionInDays: !Ref LogRetentionDays
+      Tags:
+        - Key: Application
+          Value: AWSFriendlyCounsellor
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  AliasErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub AWSFriendlyCounsellor-${EnvironmentName}-AliasErrors
+      AlarmDescription: Roll back a release when the live Lambda alias returns errors.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AnalyzeFunction
+        - Name: Resource
+          Value: !Sub ${AnalyzeFunction}:live
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  AliasThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub AWSFriendlyCounsellor-${EnvironmentName}-AliasThrottles
+      AlarmDescription: Roll back a release when the live Lambda alias is throttled.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AnalyzeFunction
+        - Name: Resource
+          Value: !Sub ${AnalyzeFunction}:live
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  Api5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub AWSFriendlyCounsellor-${EnvironmentName}-Api5xx
+      AlarmDescription: Alert when API Gateway reports server errors; alias alarms control automatic rollback.
+      Namespace: AWS/ApiGateway
+      MetricName: 5XXError
+      Dimensions:
+        - Name: ApiName
+          Value: !Sub AWSFriendlyCounsellor-${EnvironmentName}
+        - Name: Stage
+          Value: !Ref EnvironmentName
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  EnvironmentName:
+    Description: Isolated application environment
+    Value: !Ref EnvironmentName
+  ReleaseVersion:
+    Description: Deployed application release
+    Value: !Ref ReleaseVersion
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ApplicationApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}
+  ApiV1BaseUrl:
+    Description: Versioned API v1 base URL
+    Value: !Sub https://${ApplicationApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/api/v1
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt AnalyzeFunction.Arn
+  FunctionAliasArn:
+    Description: Live Lambda alias ARN used for gradual deployments
+    Value: !Sub ${AnalyzeFunction.Arn}:live
+  DataTableName:
+    Description: Tenant, project, and immutable analysis persistence table
+    Value: !Ref ApplicationDataTable
+  DataTableArn:
+    Description: Persistence table ARN
+    Value: !GetAtt ApplicationDataTable.Arn
+  UserPoolId:
+    Description: Cognito user pool for managed application identities
+    Value: !Ref ApplicationUserPool
+  UserPoolArn:
+    Description: Cognito user pool ARN used by the API authorizer
+    Value: !GetAtt ApplicationUserPool.Arn
+  UserPoolClientId:
+    Description: Public Cognito application client identifier
+    Value: !Ref ApplicationUserPoolClient

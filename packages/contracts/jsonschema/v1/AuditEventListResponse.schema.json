@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "AuditEventRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "actor_subject": {
+          "title": "Actor Subject",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "occurred_at": {
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "resource_id": {
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "tenant_id": {
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "actor_subject",
+        "action",
+        "resource_type",
+        "resource_id",
+        "request_id",
+        "occurred_at",
+        "metadata"
+      ],
+      "title": "AuditEventRecord",
+      "type": "object"
+    },
+    "ResponseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "processing_time_ms": {
+          "minimum": 0,
+          "title": "Processing Time Ms",
+          "type": "integer"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "processing_time_ms",
+        "timestamp",
+        "version",
+        "contract_version"
+      ],
+      "title": "ResponseMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "audit_events": {
+      "items": {
+        "$ref": "#/$defs/AuditEventRecord"
+      },
+      "title": "Audit Events",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ResponseMetadata"
+    },
+    "next_cursor": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Cursor"
+    }
+  },
+  "required": [
+    "audit_events",
+    "metadata"
+  ],
+  "title": "AuditEventListResponse",
+  "type": "object"
+}
