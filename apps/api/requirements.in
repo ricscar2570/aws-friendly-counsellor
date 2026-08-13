@@ -2,4 +2,4 @@
 fastapi==0.128.2
 mangum==0.21.0
 pydantic==2.13.4
-boto3==1.43.18
+boto3==1.43.67
