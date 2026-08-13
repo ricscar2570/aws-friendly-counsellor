@@ -1,0 +1,69 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "advanced_guide": {
+      "default": true,
+      "title": "Advanced Guide",
+      "type": "boolean"
+    },
+    "budget": {
+      "anyOf": [
+        {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Budget"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 5000,
+          "minLength": 10,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "estimated_users": {
+      "anyOf": [
+        {
+          "maximum": 100000000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Estimated Users"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    }
+  },
+  "title": "ProjectAnalysisCreateRequest",
+  "type": "object"
+}

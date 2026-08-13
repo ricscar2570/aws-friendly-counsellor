@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "budget": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Budget",
+      "type": "string"
+    },
+    "description": {
+      "maxLength": 5000,
+      "minLength": 10,
+      "title": "Description",
+      "type": "string"
+    },
+    "estimated_users": {
+      "maximum": 100000000,
+      "minimum": 1,
+      "title": "Estimated Users",
+      "type": "integer"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Name",
+      "type": "string"
+    },
+    "region": {
+      "default": "us-east-1",
+      "title": "Region",
+      "type": "string"
+    },
+    "status": {
+      "default": "draft",
+      "enum": [
+        "draft",
+        "active",
+        "archived"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "description",
+    "estimated_users",
+    "budget"
+  ],
+  "title": "ProjectCreateRequest",
+  "type": "object"
+}

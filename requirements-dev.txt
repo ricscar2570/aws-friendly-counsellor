@@ -1,0 +1,16 @@
+# Fully version-resolved development/test set for Python 3.12.
+-r apps/api/requirements.txt
+certifi==2026.5.20
+click==8.1.8
+coverage==7.13.3
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+iniconfig==2.3.0
+packaging==25.0
+pluggy==1.6.0
+Pygments==2.20.0
+pytest==9.0.2
+pytest-cov==7.0.0
+PyYAML==6.0.3
+uvicorn==0.48.0

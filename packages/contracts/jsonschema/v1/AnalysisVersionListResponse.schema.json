@@ -1,0 +1,110 @@
+{
+  "$defs": {
+    "AnalysisVersionSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "analysis_id": {
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "project_type": {
+          "title": "Project Type",
+          "type": "string"
+        },
+        "typical_monthly_cost": {
+          "title": "Typical Monthly Cost",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "analysis_id",
+        "project_id",
+        "version",
+        "project_type",
+        "typical_monthly_cost",
+        "created_at"
+      ],
+      "title": "AnalysisVersionSummary",
+      "type": "object"
+    },
+    "ResponseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "processing_time_ms": {
+          "minimum": 0,
+          "title": "Processing Time Ms",
+          "type": "integer"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "processing_time_ms",
+        "timestamp",
+        "version",
+        "contract_version"
+      ],
+      "title": "ResponseMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysis_versions": {
+      "items": {
+        "$ref": "#/$defs/AnalysisVersionSummary"
+      },
+      "title": "Analysis Versions",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ResponseMetadata"
+    },
+    "next_cursor": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Cursor"
+    }
+  },
+  "required": [
+    "analysis_versions",
+    "metadata"
+  ],
+  "title": "AnalysisVersionListResponse",
+  "type": "object"
+}

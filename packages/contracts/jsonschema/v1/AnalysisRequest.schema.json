@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "advanced_guide": {
+      "default": true,
+      "description": "Whether to include extended operational guidance.",
+      "title": "Advanced Guide",
+      "type": "boolean"
+    },
+    "budget": {
+      "description": "Relative budget constraint used by the deterministic planner.",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "examples": [
+        "medium"
+      ],
+      "title": "Budget",
+      "type": "string"
+    },
+    "description": {
+      "description": "Plain-language project description.",
+      "examples": [
+        "A web application with customer login, file uploads, and analytics dashboard"
+      ],
+      "maxLength": 5000,
+      "minLength": 10,
+      "title": "Description",
+      "type": "string"
+    },
+    "estimated_users": {
+      "description": "Estimated monthly active users.",
+      "examples": [
+        5000
+      ],
+      "maximum": 100000000,
+      "minimum": 1,
+      "title": "Estimated Users",
+      "type": "integer"
+    },
+    "region": {
+      "default": "us-east-1",
+      "description": "Target AWS commercial region.",
+      "examples": [
+        "eu-central-1"
+      ],
+      "title": "Region",
+      "type": "string"
+    }
+  },
+  "required": [
+    "description",
+    "estimated_users",
+    "budget"
+  ],
+  "title": "AnalysisRequest",
+  "type": "object"
+}

@@ -1,0 +1,60 @@
+name: Deploy dev
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: dev
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - run: make validate
+      - uses: aws-actions/setup-sam@v3
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: awsfc-dev-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Build and deploy exact commit
+        env:
+          RELEASE_VERSION: ${{ github.sha }}
+          GIT_SHA: ${{ github.sha }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          ENABLE_GRADUAL_DEPLOYMENT: ${{ vars.ENABLE_GRADUAL_DEPLOYMENT || 'false' }}
+          SAM_ARTIFACT_BUCKET: ${{ vars.SAM_ARTIFACT_BUCKET }}
+          CLOUDFORMATION_EXECUTION_ROLE_ARN: ${{ vars.CLOUDFORMATION_EXECUTION_ROLE_ARN }}
+        run: ./scripts/deploy_environment.sh dev
+      - name: Resolve deployed API URL
+        id: stack
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name aws-friendly-counsellor-dev \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          test -n "$API_URL"
+          echo "api_url=$API_URL" >> "$GITHUB_OUTPUT"
+      - name: Smoke test deployed release
+        run: python scripts/smoke_test.py --base-url "${{ steps.stack.outputs.api_url }}" --expected-environment dev --expected-release "${{ github.sha }}"

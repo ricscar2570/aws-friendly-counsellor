@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "v1",
+      "title": "Api Version",
+      "type": "string"
+    },
+    "docs": {
+      "title": "Docs",
+      "type": "string"
+    },
+    "environment": {
+      "enum": [
+        "local",
+        "test",
+        "dev",
+        "staging",
+        "production"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "release_version": {
+      "title": "Release Version",
+      "type": "string"
+    },
+    "service": {
+      "title": "Service",
+      "type": "string"
+    },
+    "status": {
+      "const": "healthy",
+      "title": "Status",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "service",
+    "version",
+    "release_version",
+    "environment",
+    "status",
+    "docs",
+    "api_version"
+  ],
+  "title": "RootResponse",
+  "type": "object"
+}

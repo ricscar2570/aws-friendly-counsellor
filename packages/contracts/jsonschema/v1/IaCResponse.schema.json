@@ -1,0 +1,141 @@
+{
+  "$defs": {
+    "IaCAnalysisSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "project_type": {
+          "title": "Project Type",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "services_count": {
+          "minimum": 0,
+          "title": "Services Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "project_type",
+        "services_count",
+        "region"
+      ],
+      "title": "IaCAnalysisSummary",
+      "type": "object"
+    },
+    "ResponseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "processing_time_ms": {
+          "minimum": 0,
+          "title": "Processing Time Ms",
+          "type": "integer"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "processing_time_ms",
+        "timestamp",
+        "version",
+        "contract_version"
+      ],
+      "title": "ResponseMetadata",
+      "type": "object"
+    },
+    "TerraformBundle": {
+      "additionalProperties": false,
+      "properties": {
+        "deferred_services": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Deferred Services",
+          "type": "array"
+        },
+        "files": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Files",
+          "type": "object"
+        },
+        "format": {
+          "const": "terraform",
+          "title": "Format",
+          "type": "string"
+        },
+        "instructions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Instructions",
+          "type": "array"
+        },
+        "status": {
+          "const": "baseline_ready",
+          "title": "Status",
+          "type": "string"
+        },
+        "supported_services": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Services",
+          "type": "array"
+        }
+      },
+      "required": [
+        "format",
+        "status",
+        "supported_services",
+        "deferred_services",
+        "files",
+        "instructions"
+      ],
+      "title": "TerraformBundle",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysis": {
+      "$ref": "#/$defs/IaCAnalysisSummary"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ResponseMetadata"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "terraform": {
+      "$ref": "#/$defs/TerraformBundle"
+    }
+  },
+  "required": [
+    "project_id",
+    "analysis",
+    "terraform",
+    "metadata"
+  ],
+  "title": "IaCResponse",
+  "type": "object"
+}

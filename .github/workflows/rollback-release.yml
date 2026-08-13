@@ -1,0 +1,70 @@
+name: Roll back release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to roll back
+        type: choice
+        required: true
+        options: [dev, staging, production]
+      known_good_ref:
+        description: Previously validated full commit SHA or semantic version tag
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: rollback-${{ inputs.target }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ inputs.known_good_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - run: python scripts/validate_release_ref.py --environment "${{ inputs.target }}" --ref "${{ inputs.known_good_ref }}"
+      - run: make validate
+      - uses: aws-actions/setup-sam@v3
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: awsfc-rollback-${{ inputs.target }}-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Re-deploy known-good release without traffic delay
+        env:
+          RELEASE_VERSION: ${{ inputs.known_good_ref }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          ENABLE_GRADUAL_DEPLOYMENT: 'false'
+          FORCE_ALL_AT_ONCE: 'true'
+          SAM_ARTIFACT_BUCKET: ${{ vars.SAM_ARTIFACT_BUCKET }}
+          CLOUDFORMATION_EXECUTION_ROLE_ARN: ${{ vars.CLOUDFORMATION_EXECUTION_ROLE_ARN }}
+        run: ./scripts/deploy_environment.sh "${{ inputs.target }}"
+      - name: Resolve API URL and verify rollback
+        env:
+          TARGET: ${{ inputs.target }}
+          RELEASE_VERSION: ${{ inputs.known_good_ref }}
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "aws-friendly-counsellor-$TARGET" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          python scripts/smoke_test.py --base-url "$API_URL" --expected-environment "$TARGET" --expected-release "$RELEASE_VERSION"

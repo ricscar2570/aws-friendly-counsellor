@@ -1,0 +1,493 @@
+{
+  "$defs": {
+    "AnalysisSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "classifier": {
+          "title": "Classifier",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "detected_features": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Detected Features",
+          "type": "array"
+        },
+        "project_type": {
+          "title": "Project Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_type",
+        "confidence",
+        "detected_features",
+        "classifier"
+      ],
+      "title": "AnalysisSummary",
+      "type": "object"
+    },
+    "CostAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        },
+        "breakdown": {
+          "additionalProperties": {
+            "$ref": "#/$defs/CostBreakdownItem"
+          },
+          "title": "Breakdown",
+          "type": "object"
+        },
+        "currency": {
+          "const": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "period": {
+          "const": "monthly",
+          "title": "Period",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "summary": {
+          "$ref": "#/$defs/CostSummary"
+        }
+      },
+      "required": [
+        "currency",
+        "period",
+        "region",
+        "summary",
+        "breakdown",
+        "assumptions"
+      ],
+      "title": "CostAnalysis",
+      "type": "object"
+    },
+    "CostBreakdownItem": {
+      "additionalProperties": false,
+      "properties": {
+        "display": {
+          "title": "Display",
+          "type": "string"
+        },
+        "free_tier": {
+          "title": "Free Tier",
+          "type": "string"
+        },
+        "maximum": {
+          "minimum": 0,
+          "title": "Maximum",
+          "type": "number"
+        },
+        "minimum": {
+          "minimum": 0,
+          "title": "Minimum",
+          "type": "number"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "minimum",
+        "maximum",
+        "display",
+        "free_tier"
+      ],
+      "title": "CostBreakdownItem",
+      "type": "object"
+    },
+    "CostSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_alignment": {
+          "title": "Budget Alignment",
+          "type": "string"
+        },
+        "free_tier_viable": {
+          "title": "Free Tier Viable",
+          "type": "boolean"
+        },
+        "maximum": {
+          "title": "Maximum",
+          "type": "string"
+        },
+        "maximum_value": {
+          "minimum": 0,
+          "title": "Maximum Value",
+          "type": "number"
+        },
+        "minimum": {
+          "title": "Minimum",
+          "type": "string"
+        },
+        "minimum_value": {
+          "minimum": 0,
+          "title": "Minimum Value",
+          "type": "number"
+        },
+        "typical": {
+          "title": "Typical",
+          "type": "string"
+        },
+        "typical_value": {
+          "minimum": 0,
+          "title": "Typical Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "free_tier_viable",
+        "minimum",
+        "typical",
+        "maximum",
+        "minimum_value",
+        "typical_value",
+        "maximum_value",
+        "budget_alignment"
+      ],
+      "title": "CostSummary",
+      "type": "object"
+    },
+    "GuideIntroduction": {
+      "additionalProperties": false,
+      "properties": {
+        "estimated_effort": {
+          "title": "Estimated Effort",
+          "type": "string"
+        },
+        "estimated_monthly_cost": {
+          "title": "Estimated Monthly Cost",
+          "type": "string"
+        },
+        "overview": {
+          "title": "Overview",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "overview",
+        "estimated_effort",
+        "estimated_monthly_cost"
+      ],
+      "title": "GuideIntroduction",
+      "type": "object"
+    },
+    "GuideOperations": {
+      "additionalProperties": false,
+      "properties": {
+        "cost_control": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Cost Control",
+          "type": "array"
+        },
+        "reliability": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reliability",
+          "type": "array"
+        },
+        "security": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Security",
+          "type": "array"
+        }
+      },
+      "required": [
+        "security",
+        "reliability",
+        "cost_control"
+      ],
+      "title": "GuideOperations",
+      "type": "object"
+    },
+    "GuidePhase": {
+      "additionalProperties": false,
+      "properties": {
+        "duration": {
+          "title": "Duration",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "duration",
+        "steps"
+      ],
+      "title": "GuidePhase",
+      "type": "object"
+    },
+    "GuideProjectContext": {
+      "additionalProperties": false,
+      "properties": {
+        "budget": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Budget",
+          "type": "string"
+        },
+        "complexity": {
+          "title": "Complexity",
+          "type": "string"
+        },
+        "estimated_monthly_active_users": {
+          "minimum": 1,
+          "title": "Estimated Monthly Active Users",
+          "type": "integer"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "services_count": {
+          "minimum": 0,
+          "title": "Services Count",
+          "type": "integer"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "estimated_monthly_active_users",
+        "budget",
+        "region",
+        "services_count",
+        "complexity"
+      ],
+      "title": "GuideProjectContext",
+      "type": "object"
+    },
+    "ImplementationGuide": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_checks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptance Checks",
+          "type": "array"
+        },
+        "format": {
+          "enum": [
+            "essential",
+            "advanced"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "introduction": {
+          "$ref": "#/$defs/GuideIntroduction"
+        },
+        "operations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GuideOperations"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "phases": {
+          "items": {
+            "$ref": "#/$defs/GuidePhase"
+          },
+          "title": "Phases",
+          "type": "array"
+        },
+        "prerequisites": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "project_context": {
+          "$ref": "#/$defs/GuideProjectContext"
+        }
+      },
+      "required": [
+        "format",
+        "project_context",
+        "introduction",
+        "prerequisites",
+        "phases",
+        "acceptance_checks"
+      ],
+      "title": "ImplementationGuide",
+      "type": "object"
+    },
+    "ResponseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "processing_time_ms": {
+          "minimum": 0,
+          "title": "Processing Time Ms",
+          "type": "integer"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "processing_time_ms",
+        "timestamp",
+        "version",
+        "contract_version"
+      ],
+      "title": "ResponseMetadata",
+      "type": "object"
+    },
+    "ServiceRecommendation": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "essential": {
+          "title": "Essential",
+          "type": "boolean"
+        },
+        "free_tier": {
+          "title": "Free Tier",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "typical_monthly": {
+          "title": "Typical Monthly",
+          "type": "string"
+        },
+        "use_case_example": {
+          "title": "Use Case Example",
+          "type": "string"
+        },
+        "why_needed": {
+          "title": "Why Needed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "category",
+        "essential",
+        "typical_monthly",
+        "free_tier",
+        "why_needed",
+        "use_case_example",
+        "region"
+      ],
+      "title": "ServiceRecommendation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysis": {
+      "$ref": "#/$defs/AnalysisSummary"
+    },
+    "cost_analysis": {
+      "$ref": "#/$defs/CostAnalysis"
+    },
+    "implementation_guide": {
+      "$ref": "#/$defs/ImplementationGuide"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ResponseMetadata"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "services": {
+      "items": {
+        "$ref": "#/$defs/ServiceRecommendation"
+      },
+      "title": "Services",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "analysis",
+    "services",
+    "cost_analysis",
+    "implementation_guide",
+    "metadata"
+  ],
+  "title": "AnalyzeResponse",
+  "type": "object"
+}

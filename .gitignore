@@ -10,7 +10,8 @@ env/
 
 # AWS SAM
 .aws-sam/
-samconfig.toml
+samconfig.local.toml
+!infra/sam/samconfig.toml
 
 # IDE
 .vscode/
@@ -28,3 +29,22 @@ Thumbs.db
 *.key
 .env
 
+
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.zip
+
+# Node / future web application
+node_modules/
+.next/
+coverage/
+
+# Local persistence
+.local/
+*.db
+*.db-wal
+*.db-shm

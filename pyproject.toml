@@ -1,0 +1,13 @@
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = [".", "apps/api/src", "packages/contracts/python"]
+
+[tool.coverage.run]
+source = ["apps/api/src/aws_friendly_counsellor", "packages/contracts/python/aws_friendly_counsellor_contracts"]
+omit = ["*/lambda_handler.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90

@@ -1,0 +1,55 @@
+version = 0.1
+
+[dev.global.parameters]
+stack_name = "aws-friendly-counsellor-dev"
+region = "eu-central-1"
+
+[dev.build.parameters]
+template_file = "template.yaml"
+cached = true
+parallel = true
+use_container = true
+
+[dev.deploy.parameters]
+template_file = ".aws-sam/build/template.yaml"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+resolve_s3 = false
+parameter_overrides = "EnvironmentName=dev AllowSelfRegistration=true AllowedOrigins=http://localhost:3000 LogLevel=DEBUG LogRetentionDays=14 ReservedConcurrentExecutions=5 EnableGradualDeployment=false DeploymentPreferenceType=AllAtOnce EnableContributorInsights=false EnableTableDeletionProtection=false"
+
+[staging.global.parameters]
+stack_name = "aws-friendly-counsellor-staging"
+region = "eu-central-1"
+
+[staging.build.parameters]
+template_file = "template.yaml"
+cached = true
+parallel = true
+use_container = true
+
+[staging.deploy.parameters]
+template_file = ".aws-sam/build/template.yaml"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+resolve_s3 = false
+parameter_overrides = "EnvironmentName=staging AllowSelfRegistration=false AllowedOrigins=https://staging.example.invalid LogLevel=INFO LogRetentionDays=30 ReservedConcurrentExecutions=10 EnableGradualDeployment=false DeploymentPreferenceType=Canary10Percent5Minutes EnableContributorInsights=false EnableTableDeletionProtection=false"
+
+[production.global.parameters]
+stack_name = "aws-friendly-counsellor-production"
+region = "eu-central-1"
+
+[production.build.parameters]
+template_file = "template.yaml"
+cached = true
+parallel = true
+use_container = true
+
+[production.deploy.parameters]
+template_file = ".aws-sam/build/template.yaml"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+resolve_s3 = false
+parameter_overrides = "EnvironmentName=production AllowSelfRegistration=false AllowedOrigins=https://app.example.invalid LogLevel=INFO LogRetentionDays=90 ReservedConcurrentExecutions=25 EnableGradualDeployment=false DeploymentPreferenceType=Canary10Percent10Minutes EnableContributorInsights=true EnableTableDeletionProtection=true"

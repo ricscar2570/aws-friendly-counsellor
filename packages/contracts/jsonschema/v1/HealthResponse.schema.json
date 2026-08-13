@@ -1,0 +1,92 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "v1",
+      "title": "Api Version",
+      "type": "string"
+    },
+    "check": {
+      "enum": [
+        "combined",
+        "liveness",
+        "readiness"
+      ],
+      "title": "Check",
+      "type": "string"
+    },
+    "environment": {
+      "enum": [
+        "local",
+        "test",
+        "dev",
+        "staging",
+        "production"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "git_sha": {
+      "title": "Git Sha",
+      "type": "string"
+    },
+    "persistence_backend": {
+      "anyOf": [
+        {
+          "enum": [
+            "sqlite",
+            "dynamodb"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Persistence Backend"
+    },
+    "persistence_status": {
+      "anyOf": [
+        {
+          "const": "available",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Persistence Status"
+    },
+    "release_version": {
+      "title": "Release Version",
+      "type": "string"
+    },
+    "status": {
+      "const": "healthy",
+      "title": "Status",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "check",
+    "timestamp",
+    "version",
+    "release_version",
+    "git_sha",
+    "environment",
+    "api_version"
+  ],
+  "title": "HealthResponse",
+  "type": "object"
+}

@@ -1,0 +1,78 @@
+name: Promote release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment receiving the release
+        type: choice
+        required: true
+        options: [staging, production]
+      release_ref:
+        description: Full commit SHA or semantic version tag; production requires a tag
+        type: string
+        required: true
+      enable_gradual_deployment:
+        description: Enable configured canary traffic shifting; disable only for the first bootstrap deployment
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: promote-${{ inputs.target }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ inputs.release_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - name: Validate immutable release reference
+        run: python scripts/validate_release_ref.py --environment "${{ inputs.target }}" --ref "${{ inputs.release_ref }}"
+      - run: make validate
+      - uses: aws-actions/setup-sam@v3
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: awsfc-${{ inputs.target }}-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Build and promote release
+        env:
+          RELEASE_VERSION: ${{ inputs.release_ref }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          ENABLE_GRADUAL_DEPLOYMENT: ${{ inputs.enable_gradual_deployment }}
+          SAM_ARTIFACT_BUCKET: ${{ vars.SAM_ARTIFACT_BUCKET }}
+          CLOUDFORMATION_EXECUTION_ROLE_ARN: ${{ vars.CLOUDFORMATION_EXECUTION_ROLE_ARN }}
+        run: ./scripts/deploy_environment.sh "${{ inputs.target }}"
+      - name: Resolve deployed API URL
+        id: stack
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "aws-friendly-counsellor-$TARGET" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          test -n "$API_URL"
+          echo "api_url=$API_URL" >> "$GITHUB_OUTPUT"
+      - name: Smoke test promoted release
+        run: python scripts/smoke_test.py --base-url "${{ steps.stack.outputs.api_url }}" --expected-environment "${{ inputs.target }}" --expected-release "${{ inputs.release_ref }}"
