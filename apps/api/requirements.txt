@@ -8,7 +8,7 @@ botocore==1.43.18
 fastapi==0.128.2
 idna==3.17
 jmespath==1.1.0
-mangum==0.21.0
+mangum==0.22.0
 pydantic==2.13.4
 pydantic-core==2.46.4
 python-dateutil==2.9.0.post0
