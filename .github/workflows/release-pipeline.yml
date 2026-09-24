@@ -73,7 +73,7 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
       - run: tar -C infra/sam -xzf release-bundle.tgz
       - uses: aws-actions/setup-sam@v3
-      - uses: aws-actions/configure-aws-credentials@v6.2.3
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           role-session-name: awsfc-release-staging-${{ github.run_id }}
@@ -110,7 +110,7 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
       - run: tar -C infra/sam -xzf release-bundle.tgz
       - uses: aws-actions/setup-sam@v3
-      - uses: aws-actions/configure-aws-credentials@v6.2.3
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           role-session-name: awsfc-release-production-${{ github.run_id }}
